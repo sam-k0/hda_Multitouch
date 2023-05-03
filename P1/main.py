@@ -9,8 +9,10 @@ CONTOURS_VAL_MAX = 100
 COLOR_RED = (0,0,255)
 COLOR_GREEN = (0,255,0)
 
+
 #cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI")
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\P1\\mt_camera_raw.AVI")
+#cap = cv2.VideoCapture(0)
 if(cap):
     print("Loaded")
     success, img = cap.read()
