@@ -12,7 +12,7 @@ COLOR_GREEN = (0,255,0)
 
 
 #cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI")
-cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\P1\\mt_camera_raw.AVI")
+cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI")
 if(cap):
     print("Loaded")
     success, img = cap.read()
@@ -37,12 +37,14 @@ if(cap):
         if hierarchy is not None:
             for idx in range(len(hierarchy[0])):
                 if CONTOURS_VAL_MAX > cv2.contourArea(contours[idx]) > CONTOURS_VAL_MIN and len(contours[idx]) > 4:
-                    el = cv2.fitEllipse(contours[idx])
-                    #print(el[0])
-                    #cnt = (math.floor(el[0][0]), math.floor(el[0][1]));
-                    cv2.ellipse(original, el, COLOR_RED, 1, cv2.LINE_AA)
+                    cEllipse = cv2.fitEllipse(contours[idx])
+                    #### cEllipse[0] contains the center
+                    # pass new to tracker list for this frame
+
+                    
+                    cv2.ellipse(original, cEllipse, COLOR_RED, 1, cv2.LINE_AA)
                     cv2.drawContours(original, contours, idx, COLOR_GREEN, 1, cv2.LINE_AA, hierarchy=hierarchy)
-                    #cv2.circle(original, cnt, 2, (255,0,0),1)
+                    
 
         
         cv2.imshow("Img", processed);
