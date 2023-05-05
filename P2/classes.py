@@ -30,7 +30,7 @@ class Tracker:
         self.moveThreshold = threshold       # in pixels
         self.nextTouchID = 0                 # next tracked touch gets this ID
         self.nextBlobID = 0
-
+        self.framesUntrackedDelete = 1
     #returns the blob that was used as the new blob for a touch
     def doNearestNeighbor(self,currentTouch:Touch, allBlobs:list[Blob]) -> Blob:
         min_dist = float('inf')
@@ -38,6 +38,7 @@ class Tracker:
 
         for blob in allBlobs:
             dist = distance(blob.getTuple(), currentTouch.getTuple())
+            #print("Distance is {0} for blob {1}".format(dist, blob.id))
             if dist > self.moveThreshold: # if distance is too far, skip
                 continue
             if dist < min_dist:
@@ -73,10 +74,18 @@ class Tracker:
             if(nearestBlob is None):
                 print("Blob is none for touch: " + str(touch.id))
                 touch.ageFramesUntracked += 1
+                if(touch.ageFramesUntracked >= self.framesUntrackedDelete):
+                    print("Touch {0} has been untracked since {1} frames".format(touch.id, touch.ageFramesUntracked))
+                    print("Deleting touch {0} after age of {1}".format(touch.id, touch.ageFrames))
+                    self.touches.remove(touch)
             else:
                 touch.blob = nearestBlob # update blob
+                usedBlobsForTouch.append(nearestBlob)
+
+            
 
 
+        #print(usedBlobsForTouch)
         # loop over all current frame touches and see if there are 
         # touches that didnt get used for an existing touch
 
@@ -85,4 +94,18 @@ class Tracker:
             if cBlob not in usedBlobsForTouch: #didnt get used
                 #create a new touch
                 self.addTouchToList(cBlob)
-                print("Adding blob to list of touches!")
+                print("Creating a new touch from blob!")
+
+        # Remove touches that somehow are attached to the same blob
+        touch: Touch 
+        checkt: Touch
+        for touch in self.touches:
+            for checkt in self.touches:
+                if(touch.blob == checkt.blob and touch.id != checkt.id):
+                    print("Touches {0} and {1} have the same blob!".format(touch.id, checkt.id))
+                    if(checkt.ageFrames < touch.ageFrames):
+                        print("-> Deleted {0}".format(checkt.id))
+                        self.touches.remove(checkt)
+                    else:
+                        print("-> Deleted {0}".format(touch.id))
+                        self.touches.remove(touch)
