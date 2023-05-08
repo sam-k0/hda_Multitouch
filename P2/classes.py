@@ -19,12 +19,12 @@ class Blob:
 class Touch:
     def __init__(self, id:int, blob:Blob = None) -> None:
         self.id = id
-        self.blob = blob # the blob saves the coords from this
+        self.pos:tuple = blob.getTuple()
         self.ageFrames = 0
         self.ageFramesUntracked = 0
 
     def getTuple(self) -> tuple: # returns this touches blobs coords as tuple 
-        return (self.blob.x, self.blob.y)
+        return self.pos
 
 
 class Tracker:
@@ -35,7 +35,6 @@ class Tracker:
         self.nextTouchID = 0                 # next tracked touch gets this ID
         self.nextBlobID = 0
         self.framesUntrackedDelete = 1
-        self.rejectBlobRange = 5 # 2 blobs can't be too close to each other
     #returns the blob that was used as the new blob for a touch
     def doNearestNeighbor(self,currentTouch:Touch, allBlobs:list[Blob]) -> Blob:
         min_dist = float('inf')
@@ -44,13 +43,29 @@ class Tracker:
         for blob in allBlobs:
             dist = distance(blob.getTuple(), currentTouch.getTuple())
             #print("Distance is {0} for blob {1}".format(dist, blob.id))
-            if dist > self.moveThreshold: # if distance is too far, skip
-                continue
+            if dist <= self.moveThreshold:
+                if dist < min_dist:
+                    min_dist = dist
+                    nearest = blob
+            
+        if(nearest is not None):
+            currentTouch.pos = nearest.getTuple()
+        return nearest
+    
+    def findNearestTouchFromBlob(self, blob:Blob):
+        min_dist = float('inf')
+        nearest = None
+
+        if(len(self.touches) == 0):
+            return None, -1
+
+        for tou in self.touches:
+            dist = distance(blob.getTuple(), tou.getTuple())
+            #print("Distance is {0} for blob {1}".format(dist, blob.id))
             if dist < min_dist:
                 min_dist = dist
-                nearest = blob
-            
-        return nearest # returns none when touch has no next blob
+                nearest = tou
+        return nearest, dist
 
     def addTouchToList(self, blob:Blob):
         self.touches.append(Touch(self.nextTouchID, blob))
@@ -58,19 +73,13 @@ class Tracker:
 
     #add to cache
     def addBlobToFrame(self, blobcoords:tuple)->None:
-        itr_b:Blob
-    
-        for itr_b in self.currentFrameBlobs:
-            if(distance(itr_b.getTuple(), blobcoords) < self.rejectBlobRange):
-                return
-            
         self.currentFrameBlobs.append(Blob(blobcoords, self.nextBlobID));
         self.nextBlobID += 1
 
     #clear cache
     def clearCurrentFrame(self)->None:
         self.currentFrameBlobs.clear()
-        self.nextBlobID = 0
+        
 
     def getTouchBlobs(self)->list:
         l = list()
@@ -79,82 +88,59 @@ class Tracker:
             l.append(t.blob)
         return l
     
-    def removeTouchesWithSameBlob(self)->None:
-        touch: Touch 
-        checkt: Touch
-        for touch in self.touches:
-            for checkt in self.touches:
-                if(touch.blob == checkt.blob and touch.id != checkt.id):
-                    print("Touches {0} and {1} have the same blob!".format(touch.id, checkt.id))
-                    if(checkt.ageFrames < touch.ageFrames):
-                        print("-> Deleted {0}".format(checkt.id))
-                        self.touches.remove(checkt)
-                    else:
-                        print("-> Deleted {0}".format(touch.id))
-                        self.touches.remove(touch)
-
-    def removeTouchesTooClose(self)->None:
-        touch: Touch 
-        checkt: Touch
-        for touch in self.touches:
-            for checkt in self.touches:
-                if(distance(touch.getTuple(), checkt.getTuple()) < self.rejectBlobRange and touch.id != checkt.id):
-                    print("Touches {0} and {1} have the same blob!".format(touch.id, checkt.id))
-                    if(checkt.ageFrames < touch.ageFrames):
-                        print("-> Deleted {0}".format(checkt.id))
-                        self.touches.remove(checkt)
-                    else:
-                        print("-> Deleted {0}".format(touch.id))
-                        self.touches.remove(touch)
-
-        
-    #Alle blobs killen die zu nah an touches sind??
-    # dont forget to update age on touches and destroy touches that are too old
-    # or create new touches 
-    # do nearest neighbor for all touches and the currentframeblobs
-    def updateTouches(self):
-        touch: Touch
-        usedBlobsForTouch = list() # list of all blobs that were used to update an existing touch
-        print("-----------------")
-        ## debug
-        """
-        print("Current frame has {0} blobs".format(len(self.currentFrameBlobs)))
-        b:Blob;
+    def printBlobs(self)->None:
+        b:Blob
         for b in self.currentFrameBlobs:
-            print("blob id:{0} at ({1},{2})".format(b.id, b.x, b.y))
-        """
+            print("bID: {} ({},{})".format(b.id,b.x,b.y))
+    
+    def printTouches(self)->None:
+        b:Touch
+        for b in self.touches:
+            print("tID: {} ({},{})".format(b.id,b.pos[0],b.pos[1]))
+    
+    def updateTouches(self):
+        # Loop all blobs
+        print("---")
+        self.printBlobs()
+        print("-")
+        cBlob:Blob
+        cTouch:Touch
 
-        #Problem: 2 touches können sich den gleichen blob als neue Position raussuchen...
-        #Das führt dazu dass zwei Touches an der gleichen Position sind
-        for touch in self.touches:
-            touch.ageFrames += 1
-            nearestBlob = self.doNearestNeighbor(touch, self.currentFrameBlobs)
-            
-            if(nearestBlob is None):
-                print("Blob is none for touch: " + str(touch.id))
-                ##dead
-                touch.ageFramesUntracked += 1
-                if(touch.ageFramesUntracked >= self.framesUntrackedDelete):
-                    print("Touch {0} has been untracked since {1} frames".format(touch.id, touch.ageFramesUntracked))
-                    print("Deleting touch {0} after age of {1}".format(touch.id, touch.ageFrames))
-                    self.touches.remove(touch)
+        if(self.nextTouchID >= 11):
+            print("its sus")
+
+        toremove:list = list()
+        for cTouch in self.touches:
+            if(cTouch.id == 9 and cTouch.pos[0] == 663):
+                print("susu")
+            cBlob = self.doNearestNeighbor(cTouch, self.currentFrameBlobs)
+            if(cBlob is None):
+                toremove.append(cTouch)
+                #self.touches.remove(cTouch) # no suitable new pos found remove ist sus hier
             else:
-                touch.blob = nearestBlob # update blob
-                usedBlobsForTouch.append(nearestBlob)
-
-        # An der stelle hier vllt überprüfen ob es solche Kandidaten gibt?
-        #self.removeTouchesWithSameBlob()
-
-        # loop over all current frame touches and see if there are 
-        # touches that didnt get used for an existing touch
-        cBlob: Blob
-        for cBlob in self.currentFrameBlobs:  # loop all blobs
-            if cBlob not in usedBlobsForTouch and cBlob not in self.getTouchBlobs(): #didnt get used
-                #create a new touch 
-                print("Adding touch {} from blob at {}:{}".format(self.nextTouchID, cBlob.x, cBlob.y))
-                self.addTouchToList(cBlob)
+                self.currentFrameBlobs.remove(cBlob) # 
+            
         
-        # Remove touches that somehow are attached to the same blob or 
-        self.removeTouchesWithSameBlob()
+        self.touches=[item for item in self.touches if item not in toremove]
+        #create new touch
+        if(len(self.currentFrameBlobs) > 0):
+            #print("adding new:")
+            for cBlob in self.currentFrameBlobs:
+                if(cBlob.x == 666 and len(self.touches) == 12):
+                    print("sussy")
+                near, d = self.findNearestTouchFromBlob(cBlob)
+                if(near is not None and d < self.moveThreshold):
+                    print("-> ({}:{}) with new tID {} / Nearest: {}, dist: {}".format(cBlob.x, cBlob.y, self.nextTouchID, near.id, d))
+                    near.pos = cBlob.getTuple()
+                else:
+                    self.addTouchToList(cBlob)
+
+        self.printTouches()
+        print("---")
+
+
+
+
+
 
         
