@@ -11,6 +11,14 @@
             "program": "${file}",
             "console": "integratedTerminal",
             "justMyCode": true
+        },
+        {
+            "name": "Python: Main P2",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/P2/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
         }
     ]
 }

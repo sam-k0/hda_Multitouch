@@ -11,10 +11,10 @@ CONTOURS_VAL_MAX = 100
 COLOR_RED = (0,0,255)
 COLOR_GREEN = (0,255,0)
 
-myTracker = p2.Tracker(threshold=10)
+myTracker = p2.Tracker(threshold=20)
 
-#cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI")
-cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI")
+cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI")
+#cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI")
 if(cap):
     print("Loaded")
     success, img = cap.read()
@@ -27,6 +27,7 @@ if(cap):
             print("Done.")
             break   
 
+        
         # Tracker settings
         myTracker.clearCurrentFrame(); #clears all blobs
 
@@ -43,19 +44,27 @@ if(cap):
             for idx in range(len(hierarchy[0])):
                 if CONTOURS_VAL_MAX > cv2.contourArea(contours[idx]) > CONTOURS_VAL_MIN and len(contours[idx]) > 4:
                     cEllipse = cv2.fitEllipse(contours[idx])
-                    #### cEllipse[0] contains the center
                     # pass new to tracker list for this frame
-                    myTracker.addBlobToFrame(cEllipse[0])
+                    bruhMoment=cv2.moments(contours[idx])
+                    cx = int(bruhMoment['m10']/bruhMoment['m00'])
+                    cy = int(bruhMoment['m01']/bruhMoment['m00'])
+
+                    myTracker.addBlobToFrame((cx,cy))
                     
                     cv2.ellipse(original, cEllipse, COLOR_RED, 1, cv2.LINE_AA)
                     cv2.drawContours(original, contours, idx, COLOR_GREEN, 1, cv2.LINE_AA, hierarchy=hierarchy)
-                    
+
+        b:p2.Blob      
+        for b in myTracker.currentFrameBlobs:
+            cv2.circle(img, b.getTuple(), 1, COLOR_RED, -1)
         # evaluate tracker
         myTracker.updateTouches()
 
         t: p2.Touch
+        print("Printing touches ({}):".format(len(myTracker.touches)))
         for t in myTracker.touches:
-            cv2.putText(original, str(t.id), t.getTuple(), cv2.FONT_HERSHEY_COMPLEX, 1,COLOR_GREEN)
+            print("Touch {} has blob pos {}:{}".format(t.id, t.blob.x, t.blob.y))
+            cv2.putText(original, str(t.id), t.getTuple(), cv2.FONT_HERSHEY_SIMPLEX, 0.5,COLOR_GREEN)
 
         
         cv2.imshow("Img", processed);
