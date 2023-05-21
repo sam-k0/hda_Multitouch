@@ -1,5 +1,6 @@
 import math
 import typing
+import tuioconnection
 def distance(p1:tuple, p2:tuple):
     return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
@@ -35,6 +36,10 @@ class Tracker:
         self.nextTouchID = 0                 # next tracked touch gets this ID
         self.nextBlobID = 0
         self.framesUntrackedDelete = 1
+        self.mytuio = tuioconnection.MyServer()
+        self.screenw = 1920;
+        self.screenh = 1080;
+        
     #returns the blob that was used as the new blob for a touch
     def doNearestNeighbor(self,currentTouch:Touch, allBlobs:list[Blob]) -> Blob:
         min_dist = float('inf')
@@ -132,9 +137,13 @@ class Tracker:
                     near.pos = cBlob.getTuple()
                 else: # Register new touch
                     self.addTouchToList(cBlob)
+                    
 
-        self.printTouches()
-        print("---")
+        #self.printTouches()
+        #print("---")
+
+        #tuio
+        self.mytuio.updateTouches(self.touches, self.screenw, self.screenh);
 
 
 

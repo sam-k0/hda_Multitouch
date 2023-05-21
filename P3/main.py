@@ -54,13 +54,6 @@ if(cap):
 
                         myTracker.addBlobToFrame((cx,cy))
         
-        """
-        t: p2.Touch
-        print("Before Update ({}):".format(len(myTracker.touches)))
-        for t in myTracker.touches:
-            #print("Touch {} has blob pos {}:{}".format(t.id, t.blob.x, t.blob.y))
-            cv2.putText(original, str(t.id), t.getTuple(), cv2.FONT_HERSHEY_SIMPLEX, 0.5,COLOR_GREEN)
-""" 
         # evaluate tracker
         myTracker.updateTouches()
         myTracker.clearCurrentFrame()
