@@ -1,6 +1,9 @@
 import math
 import typing
-import tuioconnection
+
+from pythontuio import TuioServer
+from pythontuio import Cursor
+
 def distance(p1:tuple, p2:tuple):
     return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
 
@@ -28,6 +31,44 @@ class Touch:
         return self.pos
 
 
+class MyServer:
+    def __init__(self) -> None:
+        self.server = TuioServer()
+        self.trackedIds = list();
+    
+    def updateTouches(self, tlist:list(), screenw:int, screenh:int):
+        
+        thist:Touch
+        checked = list();
+        checked.clear()
+        # list 1 aus Touches
+        # list 2 aus Cursors
+        # wenn in list 2 aber nicht in 1 remove
+        for thist in tlist:
+            if thist.id not in self.trackedIds: # not tracked yet
+                curs = Cursor(thist.id)
+
+                tpos = thist.getTuple();
+                normal = (tpos[0]/screenw, tpos[1]/screenh);
+                curs.position = normal;
+
+                self.server.cursors.append(curs)
+                self.trackedIds.append(thist.id)
+            else: # is schon drinne
+                curs:Cursor
+                for curs in self.server.cursors:
+                    if curs.session_id == thist.id:
+                        tpos = thist.getTuple();
+                        normal = (tpos[0]/screenw, tpos[1]/screenh);
+                        curs.position = normal;
+        
+        # alte raus
+        disappearedTouchesTotallyNotSusList = [obj for obj in self.server.cursors if obj.session_id not in [item.id for item in tlist]]
+        
+        self.server.cursors = [obj for obj in self.server.cursors if obj not in disappearedTouchesTotallyNotSusList]
+
+        self.server.send_bundle()
+
 class Tracker:
     def __init__(self, threshold:int=50) -> None:
         self.currentFrameBlobs = list()  # all blobs from this frame
@@ -36,7 +77,7 @@ class Tracker:
         self.nextTouchID = 0                 # next tracked touch gets this ID
         self.nextBlobID = 0
         self.framesUntrackedDelete = 1
-        self.mytuio = tuioconnection.MyServer()
+        self.mytuio = MyServer()
         self.screenw = 1920;
         self.screenh = 1080;
         

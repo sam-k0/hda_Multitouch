@@ -15,10 +15,17 @@ myTracker = p2.Tracker(threshold=20)
 
 #cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI") # laptop
 cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI") # for PC
+
+#cap = cv2.VideoCapture("D:\\Dokumente\\Programming\\Uni\\Semester-6\\Multitouch-Samk0\\hda_Multitouch\\mt_camera_raw.AVI")
 if(cap):
     print("Loaded")
     success, img = cap.read()
     background = img
+
+    myTracker.screenw= cap.get(cv2.CAP_PROP_FRAME_WIDTH) 
+    myTracker.screenh= cap.get(cv2.CAP_PROP_FRAME_HEIGHT) 
+    
+    
 
     while(success):
         success, img = cap.read()
