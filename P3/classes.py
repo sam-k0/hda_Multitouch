@@ -63,9 +63,9 @@ class MyServer:
                         curs.position = normal;
         
         # alte raus
-        disappearedTouchesTotallyNotSusList = [obj for obj in self.server.cursors if obj.session_id not in [item.id for item in tlist]]
+        #disappearedTouchesTotallyNotSusList = [obj for obj in self.server.cursors if obj.session_id not in [item.id for item in tlist]]
         
-        self.server.cursors = [obj for obj in self.server.cursors if obj not in disappearedTouchesTotallyNotSusList]
+        #self.server.cursors = [obj for obj in self.server.cursors if obj not in disappearedTouchesTotallyNotSusList]
 
         self.server.send_bundle()
 
