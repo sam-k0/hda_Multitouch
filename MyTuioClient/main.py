@@ -20,6 +20,7 @@ class MyListener(TuioListener):
 
     def add_tuio_cursor(self, cursor: Cursor):
         print("Added {}".format(cursor.session_id))
+        self.cursor_paths[cursor.session_id] = []  # Initialize an empty path for the cursor
 
     def update_tuio_cursor(self, cursor: Cursor) -> None:
         last_position = self.cursor_paths[cursor.session_id][-1] if self.cursor_paths[cursor.session_id] else None
@@ -28,7 +29,7 @@ class MyListener(TuioListener):
 
     def remove_tuio_cursor(self, cursor: Cursor) -> None:
         path = self.cursor_paths[cursor.session_id]  # Get the path for the cursor
-        
+        print("Removed cursor")
         if len(path) > 1:
             result = self.recognizer.recognize(path)  # Recognize gesture for the cursor
             print("Recognized gesture: " + result.Name + " with a score of " + str(result.Score))
@@ -61,10 +62,12 @@ def draw_cursors(cursors:list()):
         pygame.draw.circle(screen, (255,0,255,255), (int(x),int(y)), 10)
         draw_number(curs.session_id, x,y)
 
-
+        path:list() = listener.cursor_paths[curs.session_id]  # Get the path for the cursor
+        if len(path) > 1:
+            scaled_path = [(p.x * WINDOW_SIZE[0], p.y * WINDOW_SIZE[1]) for p in path]
+            pygame.draw.lines(screen, (255, 255, 255), False, scaled_path, 2)
 
 def main():
-
     dorun = True
     while dorun:
         for event in pygame.event.get():

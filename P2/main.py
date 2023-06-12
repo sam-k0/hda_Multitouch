@@ -13,8 +13,8 @@ COLOR_GREEN = (0,255,0)
 COLOR_SUS = (255,255,0)
 myTracker = p2.Tracker(threshold=20)
 
-#cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI") # laptop
-cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI") # for PC
+cap = cv2.VideoCapture("C:\\Users\\Samuel\\Documents\\Studium\\MI - Multitouch Interfaces\\hda_Multitouch\\P1\\mt_camera_raw.AVI") # laptop
+#cap = cv2.VideoCapture("E:\\14_STUDIUM\\Multitouch\\Praktikum\\mat\\mt_camera_raw.AVI") # for PC
 if(cap):
     print("Loaded")
     success, img = cap.read()

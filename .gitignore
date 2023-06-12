@@ -1,2 +1,4 @@
 *.AVI
 *.avi
+*.pyc
+*/_pycache__/*
