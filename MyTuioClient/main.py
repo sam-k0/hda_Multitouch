@@ -22,6 +22,7 @@ class MyListener(TuioListener):
         self.recognizer = GeometricRecognizer()
         self.recognizer.load_templates()
         self.blockList = list()
+        self.score = 0
 
     def add_tuio_cursor(self, cursor: Cursor):
         print("Added {}".format(cursor.session_id))
@@ -46,6 +47,7 @@ class MyListener(TuioListener):
                 newlist.append(block)
             else:
                 print("Removed block")
+                self.score += 100
         self.blockList = newlist
         
 
@@ -141,6 +143,8 @@ def main():
         mycurs = client.cursors
         draw_cursors(mycurs)
 
+        #draw the score
+        draw_number("Score: "+str(listener.score), WINDOW_SIZE[0]/2, 50)
 
         pygame.display.flip()
         pygame.event.pump()
