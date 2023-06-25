@@ -2,8 +2,9 @@ import pygame
 from pygame.locals import *
 import pygame.color
 import MovingBlock
+import GameOverRect
 import random
-
+from math import hypot
 
 from pythontuio import TuioClient
 from pythontuio import Cursor
@@ -15,6 +16,7 @@ from Recognizer import GeometricRecognizer # Custom recognizer
 from TuioPatterns import Point2D
 
 
+
 class MyListener(TuioListener):
 
     def __init__(self):
@@ -23,6 +25,12 @@ class MyListener(TuioListener):
         self.recognizer.load_templates()
         self.blockList = list()
         self.score = 0
+        self.gameOver = False
+        self.spawnTimer = 60
+        self.spawnTimerMax = 60
+        self.lastZoomDistance = 0
+        self.zoomFactor = 1.0
+        self.gameOverRect = None
 
     def add_tuio_cursor(self, cursor: Cursor):
         print("Added {}".format(cursor.session_id))
@@ -33,6 +41,22 @@ class MyListener(TuioListener):
         if cursor.position != last_position:
             self.cursor_paths[cursor.session_id].append(Point2D(cursor.position[0], cursor.position[1]))  # Append the cursor position to its path
 
+        if self.gameOver:
+            cursor_path = self.cursor_paths[cursor.session_id]
+            next_cursor_path = self.cursor_paths.get(cursor.session_id + 1)
+            if cursor_path is not None and next_cursor_path is not None and len(next_cursor_path) > 0:
+                print("Cursor path length: " + str(len(cursor_path)) + " Next cursor path length: " + str(len(next_cursor_path)))
+                current_distance = hypot(cursor_path[0].x - next_cursor_path[-1].x, cursor_path[0].y - next_cursor_path[-1].y)
+
+                if self.lastZoomDistance != 0:
+                    if current_distance < self.lastZoomDistance:
+                        print("Zoom-in gesture")
+                        self.zoomFactor *= 1.1  # Increase the zoom factor for zooming in
+                    else:
+                        print("Zoom-out gesture")
+                        self.zoomFactor *= 0.9  # Decrease the zoom factor for zooming out
+                self.lastZoomDistance = current_distance
+
     def remove_tuio_cursor(self, cursor: Cursor) -> None:
         path = self.cursor_paths[cursor.session_id]  # Get the path for the cursor
         #print("Removed cursor")
@@ -40,16 +64,77 @@ class MyListener(TuioListener):
             result = self.recognizer.recognize(path)  # Recognize gesture for the cursor
             print("Recognized gesture: " + result.Name + " with a score of " + str(result.Score))
 
-        newlist = []
-        for block in self.blockList:
-            #print("comparing " + str(block.type.value) + " to " + result.Name + "")
-            if block.type.value != result.Name:
-                newlist.append(block)
-            else:
-                print("Removed block")
-                self.score += 100
-        self.blockList = newlist
-        
+        if self.gameOver is False: # As long as not game over
+            newlist = []
+            for block in self.blockList:
+                #print("comparing " + str(block.type.value) + " to " + result.Name + "")
+                if block.type.value != result.Name:
+                    newlist.append(block)
+                else:
+                    print("Removed block")
+                    self.score += 100
+
+            if(newlist != self.blockList):
+                print("increasing speed")
+                self.spawnTimerMax = int(self.spawnTimerMax *0.9)
+            
+            self.blockList = newlist
+        else:
+            self.zoomFactor = 1.0
+    
+    def update_game(self) -> None:
+        #spawn blocks
+        if self.gameOver is False:
+            self.spawnTimer -= 1
+            if(self.spawnTimer <= 0):
+                rands = random.randint(1,3)
+                shape = MovingBlock.ShapeType.CHECKMARK
+                if(rands == 1):
+                    shape = MovingBlock.ShapeType.CHECKMARK
+                elif(rands == 2):
+                    shape = MovingBlock.ShapeType.CIRCLE
+                elif(rands == 3):
+                    shape = MovingBlock.ShapeType.DELETE
+
+                randx = random.randint(0,WINDOW_SIZE[0]-50)
+            
+                self.blockList.append(MovingBlock.MovingBlock(randx,0,50,50,(255,0,0,255),1,shape, screen))
+                self.spawnTimer = self.spawnTimerMax
+
+            #update game objects
+            for block in self.blockList:
+                block.update()
+
+            #draw the game objects
+            for block in self.blockList:
+                block.draw()
+                if(block.rect.y > WINDOW_SIZE[1]):
+                    # Game over 
+                    print("Game over")
+                    self.gameOver = True
+                    self.blockList = list()
+        else: # game over
+
+            # Draw game over stuff
+            self.gameOverRect = GameOverRect.GameOverRect(0,0,WINDOW_SIZE[0], WINDOW_SIZE[1],screen)
+            self.gameOverRect.draw(self.zoomFactor)
+
+            font = pygame.font.Font(None, 36)  # Choose the desired font and size
+            text_surface = font.render("Game Over - Zoom To Restart", True, (255, 255, 255))  # Render the text
+            text_rect = text_surface.get_rect()
+            text_rect.center = (WINDOW_SIZE[0]/2, WINDOW_SIZE[1]/2)  # Set the position of the text
+            screen.blit(text_surface, text_rect)  # Draw the text onto the screen
+
+            if(self.gameOverRect.drawn_rect_width > WINDOW_SIZE[0]): # zoomed and start new game
+                print("New game")
+                
+                self.score = 0
+                self.gameOver = False
+                self.spawnTimer = 60
+                self.spawnTimerMax = 60
+                self.lastZoomDistance = 0
+                self.zoomFactor = 1.0
+                self.gameOverRect = None
 
 
 # TUIO CLient
@@ -90,54 +175,20 @@ def draw_cursors(cursors:list()):
             pygame.draw.lines(screen, (255, 255, 255), False, scaled_path, 2)
 
 # Game
-#blockList.append(MovingBlock.MovingBlock(0,0,50,50,(255,0,0,255),1,MovingBlock.ShapeType.CHECKMARK, screen))
-
-
 
 def main():
     dorun = True
-
-    SPAWNCOOLDOWN = 60
-    spawncooldown = SPAWNCOOLDOWN
 
     while dorun:
         for event in pygame.event.get():
             if event.type ==QUIT:
                 dorun = False
         
-        #spawn blocks
-        spawncooldown -= 1
-        
-        if(spawncooldown <= 0):
-            rands = random.randint(1,3)
-            shape = MovingBlock.ShapeType.CHECKMARK
-            if(rands == 1):
-                shape = MovingBlock.ShapeType.CHECKMARK
-            elif(rands == 2):
-                shape = MovingBlock.ShapeType.CIRCLE
-            elif(rands == 3):
-                shape = MovingBlock.ShapeType.DELETE
-
-            randx = random.randint(0,WINDOW_SIZE[0]-50)
-            
-
-            listener.blockList.append(MovingBlock.MovingBlock(randx,0,50,50,(255,0,0,255),1,shape, screen))
-            spawncooldown = SPAWNCOOLDOWN
-
-
-        #update game objects
-        for block in listener.blockList:
-            block.update()
-
         #draw the screen
         screen.fill((0,0,0,255))
 
-        #draw the game objects
-        for block in listener.blockList:
-            block.draw()
-            if(block.rect.y > WINDOW_SIZE[1]):
-                dorun = False
-                print("Game Over")
+        #update the game
+        listener.update_game()
 
         #draw the cursors
         mycurs = client.cursors
