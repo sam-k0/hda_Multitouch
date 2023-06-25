@@ -25,7 +25,7 @@ class MyListener(TuioListener):
         self.recognizer.load_templates()
         self.blockList = list()
         self.score = 0
-        self.gameOver = False
+        self.gameOver = True
         self.spawnTimer = 60
         self.spawnTimerMax = 60
         self.lastZoomDistance = 0
@@ -125,9 +125,9 @@ class MyListener(TuioListener):
             text_rect.center = (WINDOW_SIZE[0]/2, WINDOW_SIZE[1]/2)  # Set the position of the text
             screen.blit(text_surface, text_rect)  # Draw the text onto the screen
 
-            if(self.gameOverRect.drawn_rect_width > WINDOW_SIZE[0]): # zoomed and start new game
+            print(self.gameOverRect.drawn_rect_width)
+            if(self.gameOverRect.drawn_rect_width > WINDOW_SIZE[0] or self.gameOverRect.drawn_rect_width <= 20): # zoomed and start new game
                 print("New game")
-                
                 self.score = 0
                 self.gameOver = False
                 self.spawnTimer = 60

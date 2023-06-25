@@ -30,10 +30,10 @@ class GameOverRect(GameObject.GameObject):
         rect_y = (surface_height - rect_height) // 2
 
         # Draw the centered rectangle
-        rect_color = (255, 0, 0)  # RGB color value (red in this example)
+
+        rect_color = (127, int(rect_width*0.5%255), 255)
 
         pygame.draw.rect(self.surf, rect_color, (rect_x, rect_y, rect_width, rect_height))
-        
         
         # Draw the text
         self.screen.blit(self.surf, (self.rect.x, self.rect.y))
