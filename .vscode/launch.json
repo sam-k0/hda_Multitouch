@@ -4,6 +4,7 @@
     // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
+
         {
             "name": "Python: Current File",
             "type": "python",
@@ -25,6 +26,14 @@
             "type": "python",
             "request": "launch",
             "program": "${workspaceFolder}/P3/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "Python: Game client",
+            "type": "python",
+            "request": "launch",
+            "program": "${workspaceFolder}/MyTuioClient/main.py",
             "console": "integratedTerminal",
             "justMyCode": true
         }

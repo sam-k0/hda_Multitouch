@@ -25,12 +25,13 @@ class MyListener(TuioListener):
         self.recognizer.load_templates()
         self.blockList = list()
         self.score = 0
-        self.gameOver = True
+        self.gameOver = False
         self.spawnTimer = 60
         self.spawnTimerMax = 60
         self.lastZoomDistance = 0
         self.zoomFactor = 1.0
         self.gameOverRect = None
+        self.blockSpeed = 1.0
 
     def add_tuio_cursor(self, cursor: Cursor):
         print("Added {}".format(cursor.session_id))
@@ -73,6 +74,7 @@ class MyListener(TuioListener):
                 else:
                     print("Removed block")
                     self.score += 100
+                    self.blockSpeed *= 1.055
 
             if(newlist != self.blockList):
                 print("increasing speed")
@@ -98,7 +100,7 @@ class MyListener(TuioListener):
 
                 randx = random.randint(0,WINDOW_SIZE[0]-50)
             
-                self.blockList.append(MovingBlock.MovingBlock(randx,0,50,50,(255,0,0,255),1,shape, screen))
+                self.blockList.append(MovingBlock.MovingBlock(randx,0,50,50,(255,0,0,255),self.blockSpeed,shape, screen))
                 self.spawnTimer = self.spawnTimerMax
 
             #update game objects
@@ -120,12 +122,11 @@ class MyListener(TuioListener):
             self.gameOverRect.draw(self.zoomFactor)
 
             font = pygame.font.Font(None, 36)  # Choose the desired font and size
-            text_surface = font.render("Game Over - Zoom To Restart", True, (255, 255, 255))  # Render the text
+            text_surface = font.render("Zoom The Rectangle To Screen Size To Start", True, (255, 255, 255))  # Render the text
             text_rect = text_surface.get_rect()
             text_rect.center = (WINDOW_SIZE[0]/2, WINDOW_SIZE[1]/2)  # Set the position of the text
             screen.blit(text_surface, text_rect)  # Draw the text onto the screen
 
-            print(self.gameOverRect.drawn_rect_width)
             if(self.gameOverRect.drawn_rect_width > WINDOW_SIZE[0] or self.gameOverRect.drawn_rect_width <= 20): # zoomed and start new game
                 print("New game")
                 self.score = 0
@@ -135,6 +136,8 @@ class MyListener(TuioListener):
                 self.lastZoomDistance = 0
                 self.zoomFactor = 1.0
                 self.gameOverRect = None
+                for l in self.cursor_paths:
+                    l = {}
 
 
 # TUIO CLient
@@ -188,7 +191,7 @@ def main():
         screen.fill((0,0,0,255))
 
         #update the game
-        listener.update_game()
+        #listener.update_game()
 
         #draw the cursors
         mycurs = client.cursors

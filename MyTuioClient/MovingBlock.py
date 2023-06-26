@@ -12,7 +12,7 @@ class ShapeType(Enum):
 
 
 class MovingBlock(GameObject.GameObject):
-    def __init__(self, x:int, y:int, width:int, height:int, color:tuple, speed:int, type:ShapeType, screen) -> None:
+    def __init__(self, x:int, y:int, width:int, height:int, color:tuple, speed:float, type:ShapeType, screen) -> None:
         self.color = color
         self.rect = pygame.Rect(x, y, width, height)
         self.speed = speed
