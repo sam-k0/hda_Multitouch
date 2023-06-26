@@ -16,9 +16,7 @@ from Recognizer import GeometricRecognizer # Custom recognizer
 from TuioPatterns import Point2D
 
 
-
 class MyListener(TuioListener):
-
     def __init__(self):
         self.cursor_paths = {}
         self.recognizer = GeometricRecognizer()
